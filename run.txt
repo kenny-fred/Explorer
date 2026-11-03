@@ -1,0 +1,6 @@
+chmod +x start.sh
+./start.sh
+
+make serve PORT=8000 HOST=0.0.0.0
+
+php -d session.cookie_secure=0 -S 0.0.0.0:8001 -t src src/router.php

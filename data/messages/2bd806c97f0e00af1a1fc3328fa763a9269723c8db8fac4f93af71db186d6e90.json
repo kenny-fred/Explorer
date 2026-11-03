@@ -1,0 +1,14 @@
+[
+    {
+        "id": "776a2e29d17e65344545305917255d26",
+        "from": "alice",
+        "message": "salut !",
+        "timestamp": 1793659205
+    },
+    {
+        "id": "e600c36e64cd798f0ac5610260029daf",
+        "from": "kenny",
+        "message": "hello !",
+        "timestamp": 1793662810
+    }
+]
