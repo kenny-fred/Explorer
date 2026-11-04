@@ -1,18 +1,33 @@
 <?php
-// setup.php - Script pour configurer l'utilisateur et le mot de passe
+// setup.php - Configuration du compte
 
 if ($argc < 3) {
     echo "Erreur : Parametres manquants.\n";
     exit(1);
 }
 
-$username = $argv[1];
+$username = trim($argv[1]);
 $password = $argv[2];
 
-// 1. Générer le hash
+if ($username === '') {
+    echo "[ERREUR] Le nom d'utilisateur ne peut pas etre vide.\n";
+    exit(1);
+}
+if ($password === '') {
+    echo "[ERREUR] Le mot de passe ne peut pas etre vide.\n";
+    exit(1);
+}
+
+// Génération du hash
 $hash = password_hash($password, PASSWORD_BCRYPT);
 
-// 2. Vérifier si le .env existe
+// Vérification immédiate que le hash est valide
+if (!password_verify($password, $hash)) {
+    echo "[ERREUR] Generation du hash invalide.\n";
+    exit(1);
+}
+
+// Vérifier l'existence du .env
 $envFile = __DIR__ . '/.env';
 if (!file_exists($envFile)) {
     if (file_exists(__DIR__ . '/.env.example')) {
@@ -23,26 +38,44 @@ if (!file_exists($envFile)) {
     }
 }
 
-// 3. Lire et modifier le contenu
-$content = file_get_contents($envFile);
+// Lire le fichier ligne par ligne (SANS preg_replace pour preserver les $)
+$lines = file($envFile, FILE_IGNORE_NEW_LINES);
+$usernameFound = false;
+$passwordFound = false;
 
-// Remplacer ou ajouter USERNAME
-if (preg_match('/^USERNAME=.*/m', $content)) {
-    $content = preg_replace('/^USERNAME=.*/m', 'USERNAME=' . $username, $content);
-} else {
-    $content .= "\nUSERNAME=" . $username;
+foreach ($lines as $i => $line) {
+    if (str_starts_with($line, 'USERNAME=')) {
+        $lines[$i] = 'USERNAME=' . $username;
+        $usernameFound = true;
+    } elseif (str_starts_with($line, 'PASSWORD=')) {
+        $lines[$i] = 'PASSWORD=' . $hash;
+        $passwordFound = true;
+    }
 }
 
-// Remplacer ou ajouter PASSWORD
-if (preg_match('/^PASSWORD=.*/m', $content)) {
-    $content = preg_replace('/^PASSWORD=.*/m', 'PASSWORD=' . $hash, $content);
-} else {
-    $content .= "\nPASSWORD=" . $hash;
+// Si les lignes n'existent pas, on les ajoute à la fin
+if (!$usernameFound) {
+    $lines[] = 'USERNAME=' . $username;
+}
+if (!$passwordFound) {
+    $lines[] = 'PASSWORD=' . $hash;
 }
 
-// 4. Sauvegarder
-file_put_contents($envFile, $content);
+// Sauvegarder
+file_put_contents($envFile, implode("\n", $lines) . "\n");
 
-echo "\n\033[32m[SUCCES] Configuration mise a jour !\033[0m\n";
+// Vérification finale : lire le .env et s'assurer que le hash écrit correspond
+$checkContent = file_get_contents($envFile);
+if (preg_match('/^PASSWORD=(.+)$/m', $checkContent, $m)) {
+    $writtenHash = trim($m[1]);
+    if (!password_verify($password, $writtenHash)) {
+        echo "[ERREUR] Le hash ecrit dans .env ne correspond pas au mot de passe.\n";
+        echo "Hash ecrit : $writtenHash\n";
+        echo "Longueur : " . strlen($writtenHash) . " (attendu: 60)\n";
+        exit(1);
+    }
+}
+
+echo "\n[SUCCES] Configuration mise a jour !\n";
 echo "Utilisateur : $username\n";
-echo "Hash genere : $hash\n\n";
+echo "Hash        : $hash\n\n";

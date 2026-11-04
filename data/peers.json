@@ -1,8 +1,8 @@
 [
     {
-        "username": "alice",
-        "url": "http:\/\/10.188.229.230:8000",
-        "token": "a3f8b2c9d4e1f7a5b6c3d8e0f2a4b6c9d1e3f5a7b8c0d2e4f6a9b1c3d5e7f8a0",
+        "username": "oulick",
+        "url": "http:\/\/10.239.235.104:8000",
+        "token": "c7e2a9f4b1d8e6c3a5f0b7d2e9c4a1f6b3d8e5c2a9f7b4d1e8c6a3f0b5d2e9c7",
         "dynamic": true
     }
 ]
